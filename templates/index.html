@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wire Costing & Pricing Engine</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Roboto+Mono:wght@500&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Strategic Wire Costing Engine</h1>
+            <p>Smart Manufacturing & Pricing Assistant</p>
+        </header>
+
+        <div class="grid-layout">
+            <!-- LEFT: Costing Input Form -->
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+
+                <!-- MASTER DATA SELECTOR (Load Preset) -->
+                <div class="card" style="border: 1px solid var(--accent-blue);">
+                    <div class="card-header">
+                        <span class="card-title" style="color: var(--accent-blue);">Load From Master Excel</span>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Select Category (Sheet)</label>
+                            <select id="master_category_select">
+                                <option value="">-- Select Sheet --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Select Product (Row)</label>
+                            <select id="master_product_select" disabled>
+                                <option value="">-- Select Product --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title">Manufacturing Specs</span>
+                    </div>
+
+                    <form id="costingForm">
+                        <!-- CATEGORY (Hidden - Driven by Master Excel) -->
+                        <div class="form-group" style="margin-bottom: 0.5rem;">
+                            <!-- Visual Feedback for User -->
+                            <div style="font-size: 0.9rem; color: var(--text-secondary);">Active Category: <span
+                                    id="visual_category" style="color: var(--accent-blue); font-weight: 600;">(Select
+                                    Sheet Above)</span></div>
+                            <input type="hidden" name="category" id="hidden_category" value="">
+                        </div>
+
+                        <!-- DESIGN SPECS GRID -->
+                        <!-- The grid will reflow items automatically -->
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Gauge (mm)</label>
+                                <input type="number" step="0.001" name="gauge" value="0.5" required>
+                            </div>
+
+                            <div class="form-group" id="group_strands">
+                                <label>Strands</label>
+                                <input type="number" name="strands" id="input_strands" value="16">
+                            </div>
+
+                            <div class="form-group" id="group_cores">
+                                <label>No. of Cores</label>
+                                <input type="number" name="cores" id="input_cores" value="2">
+                            </div>
+
+                            <div class="form-group">
+                                <label>Length (Gaj)</label>
+                                <input type="number" name="length_gaj" value="90" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Total Coil Weight (Kg)</label>
+                                <input type="number" step="0.001" name="coil_weight_kg" value="1.5" required>
+                            </div>
+                        </div>
+
+                        <!-- MARKET RATES GRID -->
+                        <div class="section-divider">Market Rates</div>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label id="lbl_metal_rate">Copper Rate (₹/Kg)</label>
+                                <input type="number" step="0.1" name="metal_rate_per_kg" value="750" required>
+                            </div>
+                            <div class="form-group">
+                                <label>PVC Rate (₹/Kg)</label>
+                                <input type="number" step="0.1" name="pvc_rate_per_kg" value="90" required>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <!-- Labour takes full width or grid reflow? Let's treat it as a grid item but maybe larger? Or standard. User prompt says labour type and value. -->
+                                <label>Labour (Type & Value)</label>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <select name="labour_type" style="width: 40%;">
+                                        <option value="percentage">% of Mat</option>
+                                        <option value="per_kg">₹ per Kg</option>
+                                    </select>
+                                    <input type="number" step="0.1" name="labour_value" value="6" style="width: 60%;"
+                                        required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 1rem;">
+                            <button type="submit" class="btn-primary" style="flex: 2;">Calculate Cost</button>
+                            <button type="button" id="btn_reset" class="btn-secondary"
+                                style="flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-secondary); display: none;">Reset</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- RIGHT: Results & Negotiation -->
+            <div style="display: flex; flex-direction: column; gap: 2rem;">
+
+                <!-- COMPARISON & BREAKDOWN CARD -->
+                <div class="card" id="resultCard" style="opacity: 0.5; pointer-events: none;">
+                    <div class="card-header">
+                        <span class="card-title">Cost Breakdown</span>
+                        <span id="validityBadge" class="status-badge status-SAFE">VALID</span>
+                    </div>
+
+                    <!-- COMPARISON TABLE (Hidden by Default) -->
+                    <div id="comparison_table" style="display: none; margin-bottom: 1.5rem;">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                                    <th style="padding: 0.5rem; color: var(--text-secondary);">Component</th>
+                                    <th style="padding: 0.5rem; color: var(--text-secondary);">OLD (Excel)</th>
+                                    <th
+                                        style="padding: 0.5rem; color: var(--text-secondary); color: var(--accent-blue);">
+                                        NEW (Calc)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comparison_body">
+                                <!-- JS will populate rows -->
+                            </tbody>
+                        </table>
+                        <div class="section-divider"></div>
+                    </div>
+
+                    <!-- STANDARD BREAKDOWN (Visible if No Override) -->
+                    <div id="standard_breakdown">
+                        <div class="result-group">
+                            <span class="result-label">Metal Weight</span>
+                            <span class="result-value" id="res_metal_weight">0.0000 kg</span>
+                        </div>
+                        <div class="result-group">
+                            <span class="result-label">PVC Weight</span>
+                            <span class="result-value" id="res_pvc_weight">0.0000 kg</span>
+                        </div>
+
+                        <div class="result-group" style="margin-top: 1rem;">
+                            <span class="result-label">Metal Cost</span>
+                            <span class="result-value" id="res_metal_cost">₹ 0.00</span>
+                        </div>
+                        <div class="result-group">
+                            <span class="result-label">PVC Cost</span>
+                            <span class="result-value" id="res_pvc_cost">₹ 0.00</span>
+                        </div>
+                        <div class="result-group">
+                            <span class="result-label">Labour Cost</span>
+                            <span class="result-value" id="res_labour_cost">₹ 0.00</span>
+                        </div>
+
+                        <div class="result-group highlight-cost">
+                            <span class="result-label" style="color: var(--text-primary);">Mfg. Cost</span>
+                            <span class="result-value" style="color: var(--accent-blue);" id="res_mfg_cost">₹
+                                0.00</span>
+                        </div>
+                    </div>
+
+                    <div id="errorBox" class="warning-box"></div>
+                </div>
+
+                <!-- NEGOTIATION PANEL -->
+                <div class="card header-less">
+                    <div class="card-header" style="border: none; padding-bottom: 0;">
+                        <span class="card-title">Negotiator</span>
+                        <span id="neg_status" class="status-badge status-SAFE">SAFE</span>
+                    </div>
+
+                    <div class="negotiation-panel">
+
+                        <!-- NEGOTIATOR SUMMARY TABLE -->
+                        <div id="neg_table_container" style="margin-bottom: 1.5rem; display: none;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid var(--border-color); text-align: left;">
+                                        <th style="padding: 0.5rem; color: var(--text-secondary);">Metric</th>
+                                        <th style="padding: 0.5rem; color: var(--text-secondary);">OLD</th>
+                                        <th style="padding: 0.5rem; color: var(--accent-blue);">NEW</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="neg_table_body">
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="slider-container">
+                            <div style="display: flex; justify-content: space-between;">
+                                <label>Margin %</label>
+                                <span id="val_margin" class="result-value">10.00%</span>
+                            </div>
+                            <input type="range" id="slider_margin" min="0" max="50" step="0.5" value="10">
+                        </div>
+
+                        <div class="slider-container">
+                            <div style="display: flex; justify-content: space-between;">
+                                <label>Selling Price (₹)</label>
+                                <span id="val_price" class="result-value">₹ 0.00</span>
+                            </div>
+                            <input type="range" id="slider_price" min="0" max="1000" step="1" value="0">
+                        </div>
+
+                        <div id="neg_warnings" class="warning-box"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+
+</html>
