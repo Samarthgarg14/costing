@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: costing-engine
+    env: python
+    pythonVersion: 3.11.8
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --log-level info --bind 0.0.0.0:$PORT
