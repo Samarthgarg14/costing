@@ -2,6 +2,8 @@ services:
   - type: web
     name: costing-engine
     runtime: python
-    pythonVersion: 3.11.8
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn -c gunicorn_config.py app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.8
