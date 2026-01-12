@@ -22,7 +22,7 @@ git commit -m "Ready for deploy"
 4.  Render will automatically detect the settings:
     *   **Runtime**: Python 3
     *   **Build Command**: `pip install -r requirements.txt`
-    *   **Start Command**: `gunicorn app:app`
+    *   **Start Command**: `gunicorn -c gunicorn_config.py app:app`
 5.  Click **Create Web Service**.
 
 ## 3. Deploy via Blueprint (Infrastructure as Code)
