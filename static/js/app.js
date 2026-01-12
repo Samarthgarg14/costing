@@ -402,8 +402,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (resNew.error) return;
-            valMargin.value = resNew.margin_percent.toFixed(2);
-            valPrice.value = resNew.selling_price.toFixed(2);
+            if (negotiationMode !== 'margin') valMargin.value = resNew.margin_percent.toFixed(2);
+            if (negotiationMode !== 'price') valPrice.value = resNew.selling_price.toFixed(2);
             if (negotiationMode === 'margin') sliderPrice.value = resNew.selling_price;
             else sliderMargin.value = resNew.margin_percent;
 
