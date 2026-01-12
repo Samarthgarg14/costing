@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         setInputValue('labour_value', data.labour_value || 0);
         sliderMargin.value = 15;
-        valMargin.textContent = "15.00%";
+        valMargin.value = "15.00";
         form.dispatchEvent(new Event('submit'));
     }
 
@@ -402,8 +402,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             if (resNew.error) return;
-            valMargin.textContent = resNew.margin_percent.toFixed(2) + '%';
-            valPrice.textContent = '₹ ' + resNew.selling_price.toFixed(2);
+            valMargin.value = resNew.margin_percent.toFixed(2);
+            valPrice.value = resNew.selling_price.toFixed(2);
             if (negotiationMode === 'margin') sliderPrice.value = resNew.selling_price;
             else sliderMargin.value = resNew.margin_percent;
 
@@ -421,14 +421,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     sliderMargin.addEventListener('input', () => {
         negotiationMode = 'margin';
-        valMargin.textContent = parseFloat(sliderMargin.value).toFixed(2) + '%';
+        valMargin.value = parseFloat(sliderMargin.value).toFixed(2);
+        const isSpecOverride = checkSpecOverride(new FormData(form));
+        updateNegotiation(isSpecOverride);
+    });
+
+    valMargin.addEventListener('input', () => {
+        negotiationMode = 'margin';
+        let val = parseFloat(valMargin.value);
+        if (isNaN(val)) val = 0;
+        sliderMargin.value = val;
         const isSpecOverride = checkSpecOverride(new FormData(form));
         updateNegotiation(isSpecOverride);
     });
 
     sliderPrice.addEventListener('input', () => {
         negotiationMode = 'price';
-        valPrice.textContent = '₹ ' + parseFloat(sliderPrice.value).toFixed(2);
+        valPrice.value = parseFloat(sliderPrice.value).toFixed(2);
+        const isSpecOverride = checkSpecOverride(new FormData(form));
+        updateNegotiation(isSpecOverride);
+    });
+
+    valPrice.addEventListener('input', () => {
+        negotiationMode = 'price';
+        let val = parseFloat(valPrice.value);
+        if (isNaN(val)) val = 0;
+        sliderPrice.value = val;
         const isSpecOverride = checkSpecOverride(new FormData(form));
         updateNegotiation(isSpecOverride);
     });

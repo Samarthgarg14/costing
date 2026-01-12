@@ -498,3 +498,22 @@ input[type="range"]::-webkit-slider-thumb {
     background: var(--border-color);
     margin-left: 1rem;
 }
+
+/* Manual Input in Negotiator */
+.manual-input {
+    width: 100px;
+    padding: 0.25rem 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: 'Roboto Mono', monospace;
+    text-align: right;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-input);
+    color: var(--accent-blue);
+    border-radius: 6px;
+}
+
+.manual-input:focus {
+    border-color: var(--accent-blue);
+    outline: none;
+}
