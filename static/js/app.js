@@ -154,8 +154,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         setInputValue('labour_value', data.labour_value || 0);
-        sliderMargin.value = 10;
-        valMargin.textContent = "10.00%";
+        sliderMargin.value = 15;
+        valMargin.textContent = "15.00%";
         form.dispatchEvent(new Event('submit'));
     }
 
